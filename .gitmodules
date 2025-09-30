@@ -1,3 +1,6 @@
 [submodule "Foster.Audio"]
 	path = Foster.Audio
 	url = https://github.com/MrBrixican/Foster.Audio.git
+[submodule "Jackdaw"]
+	path = Jackdaw
+	url = https://github.com/Lyfeless/Jackdaw.git
