@@ -1,18 +1,18 @@
 using System.Numerics;
 using Foster.Audio;
+using Foster.Framework;
 
 namespace Jackdaw.Audio.FosterAudio;
 
 /// <summary>
 /// A basic component for playing sounds.
 /// </summary>
-/// <param name="manager">The audio manager.</param>
+/// <param name="game">The current game instance.</param>
 /// <param name="sound">The sound to play.</param>
 /// <param name="bus">The bus to play the sound on.</param>
-public class SoundPlayerComponent(AudioManager manager, Sound sound, string? bus = null) : Component(manager.Game) {
-    protected readonly AudioManager Manager = manager;
-    protected Sound Sound = sound;
-    protected readonly string? Bus = bus;
+public class SoundPlayerComponent(Game game, Sound sound, SoundGroup? bus) : Component(game) {
+    Sound Sound = sound;
+    protected readonly SoundGroup? Bus = bus;
 
     /// <summary>
     /// The current sound instance.
@@ -27,6 +27,12 @@ public class SoundPlayerComponent(AudioManager manager, Sound sound, string? bus
     bool paused = false;
     TimeSpan pauseCursor;
 
+    /// <summary>
+    /// If the sound is currently playing.
+    /// </summary>
+    public bool Playing => Player.Playing;
+
+    #region Player variables
     /// <summary>
     /// The volume the sound should play at.
     /// </summary>
@@ -125,16 +131,47 @@ public class SoundPlayerComponent(AudioManager manager, Sound sound, string? bus
 
     public ulong? LoopEndPcmFrames { get => loopEndPcmFrames; set => loopEndPcmFrames = value; }
     ulong? loopEndPcmFrames;
+    #endregion
 
-    public SoundPlayerComponent(AudioManager manager, string sound, string? bus = null) : this(manager, manager.GetSound(sound), bus) { }
+    /// <summary>
+    /// A basic component for playing sounds.
+    /// </summary>
+    /// <param name="game">The current game instance.</param>
+    /// <param name="sound">The sound to play.</param>
+    /// <param name="bus">The bus to play the sound on.</param>
+    public SoundPlayerComponent(Game game, Sound sound, string? bus = null)
+        : this(game, sound, bus != null ? game.Assets.GetSoundGroup(bus) : null) { }
+
+    /// <summary>
+    /// A basic component for playing sounds.
+    /// </summary>
+    /// <param name="game">The current game instance.</param>
+    /// <param name="sound">The sound to play.</param>
+    /// <param name="bus">The bus to play the sound on.</param>
+    public SoundPlayerComponent(Game game, string sound, SoundGroup? bus = null)
+        : this(game, game.Assets.GetSound(sound), bus) { }
+
+    /// <summary>
+    /// A basic component for playing sounds.
+    /// </summary>
+    /// <param name="game">The current game instance.</param>
+    /// <param name="sound">The sound to play.</param>
+    /// <param name="bus">The bus to play the sound on.</param>
+    public SoundPlayerComponent(Game game, string sound, string? bus = null)
+        : this(game, game.Assets.GetSound(sound), bus) { }
 
     /// <summary>
     /// Play the sound.
     /// </summary>
     public virtual void Play() {
+        if (!InTree) {
+            Log.Info("SoundPlayer: Attempting to play a sound component while it isn't in the tree, skipping.");
+            return;
+        }
+
         paused = false;
-        Stop();
-        Player = Manager.Play(Sound, Bus);
+        if (Playing) { Stop(); }
+        Player = Sound.Play(Bus);
 
         // Assign default values.
         if (volume != null) { Player.Volume = (float)volume; }
@@ -185,11 +222,21 @@ public class SoundPlayerComponent(AudioManager manager, Sound sound, string? bus
     /// Resume the sound at the position it was paused at.
     /// </summary>
     public void Unpause() {
-        if (!paused) { return; }
+        if (!InTree || !paused) { return; }
 
         paused = false;
         Player.Play();
         Player.Cursor = pauseCursor;
+    }
+
+    /// <summary>
+    /// Set the player's sound. <br/>
+    /// If currently playing, this will start the new sound from the beginning.
+    /// </summary>
+    /// <param name="sound"></param>
+    public void SetSound(Sound sound) {
+        Sound = sound;
+        if (Playing) { Play(); }
     }
 
     protected override void EnterTree() {
