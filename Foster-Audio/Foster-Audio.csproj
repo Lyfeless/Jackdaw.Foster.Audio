@@ -3,13 +3,12 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Foster-Audio</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JackdawEngine" Version="0.2.1" />
+    <PackageReference Include="JackdawEngine" Version="0.2.2" />
     <ProjectReference Include="..\Foster.Audio\Foster.Audio\Foster.Audio.csproj" />
   </ItemGroup>
 
